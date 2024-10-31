@@ -24,7 +24,7 @@ class Application(Frame):
         # Define the source and target folder variables
 
         self.origin = os.getcwd()
-        self.copied = IntVar()
+        self.gotData = IntVar()
         self.copying = 0
         self.source = ""
         self.target = ""
@@ -174,6 +174,7 @@ class Application(Frame):
         self.aboutTextD.grid(row=4, column=0, columnspan=4, padx=5, pady=0, sticky='NSEW')
 
         self.type.set(1)
+        self.gotData.set(0)
 
     def create_connection(self):
         ''' Create connection to PostgreSQL database
@@ -219,8 +220,10 @@ class Application(Frame):
 
             conn.close()
 
+            self.gotData.set(1)
+
         except Exception as e:
-            print(f'Error getting connection : {e}')
+            messagebox.showerror('Error', 'Combination for date not found')
 
     def get_fantasy(self, conn):
 
@@ -300,14 +303,24 @@ class Application(Frame):
 
             fantasy_data = (draw, numa, numb, numc, numd, nume)
 
-            insert_sql = '''
-            insert into fantasy_five (draw_date, numa, numb, numc, numd, nume)
-            values (%s, %s, %s, %s, %s, %s)
-            '''
-
             cursor = conn.cursor()
 
-            cursor.execute(insert_sql, fantasy_data)
+            if self.gotData.get():
+                update_sql = f'''
+                update fantasy_five
+                set numa = {numa}, numb = {numb}, numc = {numc}, numd = {numd}, nume = {nume}
+                where draw_date = '{draw}'
+                '''
+
+                cursor.execute(update_sql)
+
+            else:
+                insert_sql = '''
+                insert into fantasy_five (draw_date, numa, numb, numc, numd, nume)
+                values (%s, %s, %s, %s, %s, %s)
+                '''
+
+                cursor.execute(insert_sql, fantasy_data)
                 
             cursor.close()
             conn.close()
@@ -342,14 +355,24 @@ class Application(Frame):
 
             extended_data = (draw, numa, numb, numc, numd, nume, numx)
 
-            insert_sql = f'''
-            insert into {table_name} (draw_date, numa, numb, numc, numd, nume, numx)
-            values (%s, %s, %s, %s, %s, %s, %s)
-            '''
-
             cursor = conn.cursor()
 
-            cursor.execute(insert_sql, extended_data)
+            if self.gotData.get():
+                update_sql = f'''
+                update {table_name}
+                set numa = {numa}, numb = {numb}, numc = {numc}, numd = {numd}, nume = {nume}, numx = {numx}
+                where draw_date = '{draw}'
+                '''
+
+                cursor.execute(update_sql)
+
+            else:
+                insert_sql = f'''
+                insert into {table_name} (draw_date, numa, numb, numc, numd, nume, numx)
+                values (%s, %s, %s, %s, %s, %s, %s)
+                '''
+
+                cursor.execute(insert_sql, extended_data)
                 
             cursor.close()
             conn.close()
